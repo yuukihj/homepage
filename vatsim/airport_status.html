@@ -75,6 +75,7 @@
 
     <script>
         const VATSIM_DATA_URL = 'https://data.vatsim.net/v3/vatsim-data.json';
+        const MAX_FLIGHT_ROWS = 10; // 전광판에 표시할 최대 항공편 수
 
         // 인천공항 (RKSI) 좌표 - 변경시각 계산에 사용
         const RKSI_LAT = 37.4625;
@@ -99,6 +100,10 @@
 
         // 텍스트를 한 글자씩 표시하는 애니메이션 함수
         async function animateText(element, text) {
+            // 현재 텍스트와 변경될 텍스트가 같으면 애니메이션 생략
+            if (element.textContent === text) {
+                return;
+            }
             element.innerHTML = '';
             for (let i = 0; i < text.length; i++) {
                 const charSpan = document.createElement('span');
@@ -106,7 +111,7 @@
                 charSpan.style.opacity = '0';
                 charSpan.style.transition = `opacity 0.05s linear ${i * 0.02}s`;
                 element.appendChild(charSpan);
-                void charSpan.offsetWidth;
+                void charSpan.offsetWidth; // Reflow를 강제하여 transition이 적용되게 함
                 charSpan.style.opacity = '1';
             }
         }
@@ -115,9 +120,12 @@
         async function fetchVatsimAircraft() {
             const flightBoardBody = document.getElementById('flight-board-body');
             const statusMessage = document.getElementById('aircraft-status-message');
-            flightBoardBody.innerHTML = '';
-            statusMessage.textContent = '인천공항 도착 항공기 정보를 불러오는 중...';
-            statusMessage.style.display = 'block';
+            // 항공기 정보가 로드되기 전까지 메시지 표시
+            if (flightBoardBody.children.length === 0 || statusMessage.style.display !== 'none') {
+                statusMessage.textContent = '인천공항 도착 항공기 정보를 불러오는 중...';
+                statusMessage.style.display = 'block';
+            }
+
 
             try {
                 const response = await fetch(VATSIM_DATA_URL);
@@ -131,7 +139,7 @@
                 );
 
                 if (rksiArrivals.length > 0) {
-                    statusMessage.style.display = 'none';
+                    statusMessage.style.display = 'none'; // 데이터가 있으면 메시지 숨김
 
                     // 각 항공편 데이터에 예정 도착 시간 (Date 객체) 추가 및 필터링
                     rksiArrivals = rksiArrivals.map(pilot => {
@@ -190,100 +198,136 @@
                         return a.scheduledArrivalDate.getTime() - b.scheduledArrivalDate.getTime();
                     });
 
+                    // 최대 표시 행 수에 맞춰 데이터 자르기
+                    const displayFlights = rksiArrivals.slice(0, MAX_FLIGHT_ROWS);
 
-                    for (const pilot of rksiArrivals) {
-                        const row = flightBoardBody.insertRow();
-                        row.className = 'flight-row';
+                    for (let i = 0; i < MAX_FLIGHT_ROWS; i++) {
+                        const row = flightBoardBody.rows[i];
+                        const pilot = displayFlights[i];
 
-                        const callsignCell = row.insertCell();
-                        const scheduledTimeCell = row.insertCell();
-                        const departureAirportCell = row.insertCell();
-                        const changedTimeCell = row.insertCell();
-                        const statusCell = row.insertCell();
+                        const callsignCell = row.cells[0];
+                        const scheduledTimeCell = row.cells[1];
+                        const departureAirportCell = row.cells[2];
+                        const changedTimeCell = row.cells[3];
+                        const statusCell = row.cells[4];
 
-                        const flightPlan = pilot.flight_plan;
+                        if (pilot) {
+                            const flightPlan = pilot.flight_plan;
 
-                        // 1. 예정 시간 (Scheduled Time) 표시 (KST로 변환)
-                        let scheduledArrivalTimeFormatted = 'N/A';
-                        let scheduledArrivalDateObj = null; // Date 객체 저장
-                        if (pilot.scheduledArrivalDate) {
-                            scheduledArrivalDateObj = pilot.scheduledArrivalDate; // 이미 UTC 기준 Date 객체
-                            scheduledArrivalTimeFormatted = scheduledArrivalDateObj.toLocaleTimeString('ko-KR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false,
-                                timeZone: 'Asia/Seoul' // KST로 표시
-                            });
-                        }
+                            // 1. 예정 시간 (Scheduled Time) 표시 (KST로 변환)
+                            let scheduledArrivalTimeFormatted = 'N/A';
+                            let scheduledArrivalDateObj = null;
+                            if (pilot.scheduledArrivalDate) {
+                                scheduledArrivalDateObj = pilot.scheduledArrivalDate;
+                                scheduledArrivalTimeFormatted = scheduledArrivalDateObj.toLocaleTimeString('ko-KR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                    timeZone: 'Asia/Seoul'
+                                });
+                            }
 
-                        // 2. 출발지 (Departure Airport)
-                        const departureAirport = flightPlan?.departure || 'N/A';
+                            // 2. 출발지 (Departure Airport)
+                            const departureAirport = flightPlan?.departure || 'N/A';
 
-                        // 3. 변경 시각 (Changed Time) 계산: 현재 위치에서 RKSI까지의 ETA (KST로 변환)
-                        let estimatedArrivalTime = 'N/A';
-                        let estimatedArrivalDateObj = null; // Date 객체 저장
-                        if (pilot.groundspeed > 0) {
-                            const distanceKm = calculateDistance(
-                                pilot.latitude, pilot.longitude,
-                                RKSI_LAT, RKSI_LON
-                            );
-                            const timeToRKSIHours = distanceKm / pilot.groundspeed; // 시간 (시)
-                            const timeToRKSIMinutes = timeToRKSIHours * 60; // 시간 (분)
+                            // 3. 변경 시각 (Changed Time) 계산: 현재 위치에서 RKSI까지의 ETA (KST로 변환)
+                            let estimatedArrivalTime = 'N/A';
+                            let estimatedArrivalDateObj = null;
+                            if (pilot.groundspeed > 0) {
+                                const distanceKm = calculateDistance(
+                                    pilot.latitude, pilot.longitude,
+                                    RKSI_LAT, RKSI_LON
+                                );
+                                const timeToRKSIHours = distanceKm / pilot.groundspeed;
+                                const timeToRKSIMinutes = timeToRKSIHours * 60;
 
-                            // 현재 UTC 시각에 RKSI까지 걸리는 시간을 더함 (UTC Date 객체로 생성)
-                            const nowUtc = new Date(new Date().toUTCString());
-                            estimatedArrivalDateObj = new Date(nowUtc.getTime() + timeToRKSIMinutes * 60 * 1000);
+                                const nowUtc = new Date(new Date().toUTCString());
+                                estimatedArrivalDateObj = new Date(nowUtc.getTime() + timeToRKSIMinutes * 60 * 1000);
 
-                            estimatedArrivalTime = estimatedArrivalDateObj.toLocaleTimeString('ko-KR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false,
-                                timeZone: 'Asia/Seoul' // KST로 표시
-                            });
+                                estimatedArrivalTime = estimatedArrivalDateObj.toLocaleTimeString('ko-KR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                    timeZone: 'Asia/Seoul'
+                                });
+                            } else {
+                                estimatedArrivalTime = ''; // 지상 속도가 0이면 변경 시각 없음
+                            }
+
+                            // 4. 현황 (Status) 판단
+                            let currentStatus = ''; // 기본값은 공란
+                            const distanceToRKSI = calculateDistance(pilot.latitude, pilot.longitude, RKSI_LAT, RKSI_LON);
+                            const MIN_ALT_FOR_APPROACH = 500; // 접근으로 간주할 최소 고도 (feet)
+
+                            // 지연 로직 우선 적용
+                            if (scheduledArrivalDateObj && estimatedArrivalDateObj) {
+                                const diffMs = estimatedArrivalDateObj.getTime() - scheduledArrivalDateObj.getTime();
+                                const diffMinutes = Math.round(diffMs / (1000 * 60)); // 분 단위 차이
+
+                                if (diffMinutes > 15) {
+                                    currentStatus = 'DELAYED';
+                                }
+                            }
+
+                            // 지연이 아닐 경우에만 접근 현황 판단
+                            if (currentStatus === '') {
+                                if (pilot.groundspeed > 0 && distanceToRKSI < 40 && pilot.altitude > MIN_ALT_FOR_APPROACH) {
+                                    currentStatus = 'APPROACH';
+                                }
+                            }
+
+                            row.className = 'flight-row'; // 데이터가 있으면 클래스 유지
+                            statusCell.className = getStatusClass(currentStatus);
+
+                            // 각 셀에 애니메이션 적용 (이전 텍스트와 다를 경우에만)
+                            await animateText(callsignCell, pilot.callsign);
+                            await animateText(scheduledTimeCell, scheduledArrivalTimeFormatted);
+                            await animateText(departureAirportCell, departureAirport);
+                            await animateText(changedTimeCell, estimatedArrivalTime);
+                            await animateText(statusCell, currentStatus);
+
                         } else {
-                            estimatedArrivalTime = '';
+                            // 데이터가 없으면 해당 행을 비움
+                            row.className = 'flight-row empty'; // 비어있음을 나타내는 클래스 추가 (옵션)
+                            statusCell.className = ''; // 상태 클래스 제거
+                            await animateText(callsignCell, '-');
+                            await animateText(scheduledTimeCell, '-');
+                            await animateText(departureAirportCell, '-');
+                            await animateText(changedTimeCell, '-');
+                            await animateText(statusCell, '-');
                         }
-
-                        // 4. 현황 (Status) 판단
-                        let currentStatus = ''; // 기본값은 공란
-                        const distanceToRKSI = calculateDistance(pilot.latitude, pilot.longitude, RKSI_LAT, RKSI_LON);
-                        const MIN_ALT_FOR_APPROACH = 500; // 접근으로 간주할 최소 고도 (feet)
-
-                        // 지연 로직 우선 적용
-                        if (scheduledArrivalDateObj && estimatedArrivalDateObj) {
-                            const diffMs = estimatedArrivalDateObj.getTime() - scheduledArrivalDateObj.getTime();
-                            const diffMinutes = Math.round(diffMs / (1000 * 60)); // 분 단위 차이
-
-                            if (diffMinutes > 15) { // 변경 시각이 예정 시각보다 15분 초과 지연
-                                currentStatus = 'DELAYED';
-                            }
-                        }
-
-                        // 지연이 아닐 경우에만 접근 현황 판단
-                        if (currentStatus === '') { // 지연이 아닐 때만 다음 조건 확인
-                            if (pilot.groundspeed > 0 && distanceToRKSI < 40 && pilot.altitude > MIN_ALT_FOR_APPROACH) {
-                                currentStatus = 'APPROACH'; // 접근 중
-                            }
-                        }
-
-                        statusCell.className = getStatusClass(currentStatus);
-
-                        // 각 셀에 애니메이션 적용
-                        await animateText(callsignCell, pilot.callsign);
-                        await animateText(scheduledTimeCell, scheduledArrivalTimeFormatted);
-                        await animateText(departureAirportCell, departureAirport);
-                        await animateText(changedTimeCell, estimatedArrivalTime);
-                        await animateText(statusCell, currentStatus);
-
-                        await new Promise(resolve => setTimeout(resolve, 300));
+                        // 각 행 업데이트 사이에 약간의 지연을 주어 부드럽게 보이도록 함
+                        await new Promise(resolve => setTimeout(resolve, 50));
                     }
                 } else {
                     statusMessage.textContent = '현재 인천공항(RKSI)으로 도착하는 항공기가 없습니다.';
+                    statusMessage.style.display = 'block';
+                    // 데이터가 없으면 모든 행을 비움
+                    for (let i = 0; i < MAX_FLIGHT_ROWS; i++) {
+                        const row = flightBoardBody.rows[i];
+                        row.className = 'flight-row empty';
+                        row.cells[0].textContent = '';
+                        row.cells[1].textContent = '';
+                        row.cells[2].textContent = '';
+                        row.cells[3].textContent = '';
+                        row.cells[4].textContent = '';
+                        row.cells[4].className = ''; // 상태 클래스 제거
+                    }
                 }
 
             } catch (error) {
                 statusMessage.textContent = '항공기 정보를 불러오지 못했습니다.';
-                flightBoardBody.innerHTML = `<tr><td colspan="5" class="error-message">오류: ${error.message}</td></tr>`;
+                statusMessage.style.display = 'block';
+                for (let i = 0; i < MAX_FLIGHT_ROWS; i++) {
+                    const row = flightBoardBody.rows[i];
+                    row.className = 'flight-row empty';
+                    row.cells[0].textContent = '';
+                    row.cells[1].textContent = '';
+                    row.cells[2].textContent = '';
+                    row.cells[3].textContent = '';
+                    row.cells[4].textContent = '';
+                    row.cells[4].className = '';
+                }
                 console.error("Vatsim 항공기 정보 로드 오류:", error);
             }
         }
@@ -389,15 +433,29 @@
         }
 
 
+        // 페이지 로드 시 초기 테이블 행 생성
+        function initializeFlightTable() {
+            const flightBoardBody = document.getElementById('flight-board-body');
+            for (let i = 0; i < MAX_FLIGHT_ROWS; i++) {
+                const row = flightBoardBody.insertRow();
+                row.className = 'flight-row empty'; // 초기에는 비어있는 상태
+                for (let j = 0; j < 5; j++) { // 5개의 셀 (편명, 예정 시간, 출발지, 변경 시각, 현황)
+                    row.insertCell();
+                }
+            }
+        }
+
         // 페이지 로드 시 정보 가져오기
         document.addEventListener('DOMContentLoaded', () => {
+            initializeFlightTable(); // 테이블 행 미리 생성
+
             fetchVatsimAircraft();
             fetchVatsimAtc();
             updateKSTTime(); // 페이지 로드 시 즉시 시간 표시
 
             // 주기적으로 업데이트
-            setInterval(fetchVatsimAircraft, 30000); // 30초마다 항공기 정보 업데이트
-            setInterval(fetchVatsimAtc, 60000); // 60초마다 관제사 정보 업데이트
+            setInterval(fetchVatsimAircraft, 10000); // 10초마다 항공기 정보 업데이트
+            setInterval(fetchVatsimAtc, 10000); // 10초마다 관제사 정보 업데이트
             setInterval(updateKSTTime, 1000); // 1초마다 KST 시간 업데이트
         });
     </script>
