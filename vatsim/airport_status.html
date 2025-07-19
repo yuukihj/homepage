@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vatsim 공항 전광판</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>✈️ Vatsim 인천공항 (RKSI) 실시간 도착 전광판</h1>
+            <p>인천국제공항(RKSI)에서 도착하는 항공기 정보를 확인하세요!</p>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="../index.html">홈</a></li>
+                <li><a href="#vatsim-aircraft-info">도착 전광판</a></li>
+                <li><a href="#vatsim-atc-info">관제사 현황</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <section class="info-section" id="vatsim-aircraft-info">
+                <div class="flight-board-header">
+                    <img src="/assets/arrivalico.png" width="50" style="padding-left: 3%;">
+                    <h2>인천공항 도착 항공편</h2>
+                    <div id="current-kst-time" class="kst-time"></div>
+                </div>
+                <div class="card flight-board-card">
+                    <p id="aircraft-status-message">인천공항 도착 항공기 정보를 불러오는 중...</p>
+                    <div class="data-display">
+                        <table class="flight-board">
+                            <thead>
+                                <tr>
+                                    <th>편명</th>
+                                    <th>예정 시간</th>
+                                    <th>출발지</th>
+                                    <th>변경 시각</th>
+                                    <th>현황</th>
+                                </tr>
+                            </thead>
+                            <tbody id="flight-board-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="info-section" id="vatsim-atc-info">
+                <h2>현재 활동 중인 관제사</h2>
+                <div class="card">
+                    <p>Vatsim 관제사 정보를 불러오는 중...</p>
+                    <div class="atc-list">
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 정보 허브. 모든 권리 보유.</p>
+        </div>
+    </footer>
+
+    <script>
+        const VATSIM_DATA_URL = 'https://data.vatsim.net/v3/vatsim-data.json';
+
+        // 인천공항 (RKSI) 좌표 - 변경시각 계산에 사용
+        const RKSI_LAT = 37.4625;
+        const RKSI_LON = 126.439167;
+        const EARTH_RADIUS_KM = 6371; // 지구 평균 반지름 (km)
+
+        // Haversine 공식을 이용한 두 위경도 지점 간의 거리 계산 (km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const toRadians = (deg) => deg * (Math.PI / 180);
+
+            const dLat = toRadians(lat2 - lat1);
+            const dLon = toRadians(lon2 - lon1);
+
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return EARTH_RADIUS_KM * c; // 거리 (km)
+        }
+
+        // 텍스트를 한 글자씩 표시하는 애니메이션 함수
+        async function animateText(element, text) {
+            element.innerHTML = '';
+            for (let i = 0; i < text.length; i++) {
+                const charSpan = document.createElement('span');
+                charSpan.textContent = text.charAt(i);
+                charSpan.style.opacity = '0';
+                charSpan.style.transition = `opacity 0.05s linear ${i * 0.02}s`;
+                element.appendChild(charSpan);
+                void charSpan.offsetWidth;
+                charSpan.style.opacity = '1';
+            }
+        }
+
+        // Vatsim 항공기 정보 가져오기 (도착 항공편)
+        async function fetchVatsimAircraft() {
+            const flightBoardBody = document.getElementById('flight-board-body');
+            const statusMessage = document.getElementById('aircraft-status-message');
+            flightBoardBody.innerHTML = '';
+            statusMessage.textContent = '인천공항 도착 항공기 정보를 불러오는 중...';
+            statusMessage.style.display = 'block';
+
+            try {
+                const response = await fetch(VATSIM_DATA_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                let rksiArrivals = data.pilots.filter(pilot =>
+                    pilot.flight_plan && pilot.flight_plan.arrival === 'RKSI'
+                );
+
+                if (rksiArrivals.length > 0) {
+                    statusMessage.style.display = 'none';
+
+                    // 각 항공편 데이터에 예정 도착 시간 (Date 객체) 추가 및 필터링
+                    rksiArrivals = rksiArrivals.map(pilot => {
+                        const flightPlan = pilot.flight_plan;
+                        let scheduledArrivalDate = null;
+
+                        if (flightPlan && flightPlan.deptime && flightPlan.enroute_time) {
+                            try {
+                                const depTimeHours = parseInt(flightPlan.deptime.substring(0, 2));
+                                const depTimeMinutes = parseInt(flightPlan.deptime.substring(2, 4));
+
+                                const enrouteHours = parseInt(flightPlan.enroute_time.substring(0, 2));
+                                const enrouteMinutes = parseInt(flightPlan.enroute_time.substring(2, 4));
+                                const totalEnrouteMinutes = enrouteHours * 60 + enrouteMinutes;
+
+                                const nowUtc = new Date(new Date().toUTCString()); // 현재 UTC 시간
+
+                                // 예정 출발 시간을 UTC 기준으로 Date 객체로 생성
+                                let departureUtc = new Date(Date.UTC(nowUtc.getFullYear(), nowUtc.getMonth(), nowUtc.getDate(),
+                                    depTimeHours, depTimeMinutes, 0));
+
+                                // 비행 계획의 출발 시간이 현재 UTC 시간보다 12시간 이상 과거이면 다음 날로 처리
+                                if (departureUtc.getTime() < nowUtc.getTime() - (12 * 60 * 60 * 1000)) {
+                                    departureUtc.setUTCDate(departureUtc.getUTCDate() + 1);
+                                }
+                                // 반대로, 출발 시간이 현재 UTC 시간보다 12시간 이상 미래이면 전날로 처리
+                                else if (departureUtc.getTime() > nowUtc.getTime() + (12 * 60 * 60 * 1000)) {
+                                    departureUtc.setUTCDate(departureUtc.getUTCDate() - 1);
+                                }
+
+
+                                // 예정 도착 시간을 UTC 기준으로 계산 (Date 객체는 내부적으로 UTC를 따름)
+                                scheduledArrivalDate = new Date(departureUtc.getTime() + totalEnrouteMinutes * 60 * 1000);
+
+                                // 예정 도착 시간이 현재 UTC 시간보다 30분 이상 과거이면 필터링 (이미 도착했거나 취소된 것으로 간주)
+                                if (scheduledArrivalDate.getTime() < nowUtc.getTime() - (30 * 60 * 1000)) {
+                                    return null; // 이 데이터는 제외
+                                }
+
+                            } catch (e) {
+                                console.warn("예정 도착 시간 계산 오류:", e);
+                                return null;
+                            }
+                        } else {
+                            return null; // 비행 계획이 없거나 시간이 없으면 제외
+                        }
+                        pilot.scheduledArrivalDate = scheduledArrivalDate;
+                        return pilot;
+                    }).filter(Boolean); // null 값 제거
+
+                    // 예정 도착 시간 (Date 객체) 기준으로 오름차순 정렬
+                    rksiArrivals.sort((a, b) => {
+                        if (!a.scheduledArrivalDate || !b.scheduledArrivalDate) {
+                            return 0; // 날짜 정보가 없으면 정렬하지 않음
+                        }
+                        return a.scheduledArrivalDate.getTime() - b.scheduledArrivalDate.getTime();
+                    });
+
+
+                    for (const pilot of rksiArrivals) {
+                        const row = flightBoardBody.insertRow();
+                        row.className = 'flight-row';
+
+                        const callsignCell = row.insertCell();
+                        const scheduledTimeCell = row.insertCell();
+                        const departureAirportCell = row.insertCell();
+                        const changedTimeCell = row.insertCell();
+                        const statusCell = row.insertCell();
+
+                        const flightPlan = pilot.flight_plan;
+
+                        // 1. 예정 시간 (Scheduled Time) 표시 (KST로 변환)
+                        let scheduledArrivalTimeFormatted = 'N/A';
+                        let scheduledArrivalDateObj = null; // Date 객체 저장
+                        if (pilot.scheduledArrivalDate) {
+                            scheduledArrivalDateObj = pilot.scheduledArrivalDate; // 이미 UTC 기준 Date 객체
+                            scheduledArrivalTimeFormatted = scheduledArrivalDateObj.toLocaleTimeString('ko-KR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Asia/Seoul' // KST로 표시
+                            });
+                        }
+
+                        // 2. 출발지 (Departure Airport)
+                        const departureAirport = flightPlan?.departure || 'N/A';
+
+                        // 3. 변경 시각 (Changed Time) 계산: 현재 위치에서 RKSI까지의 ETA (KST로 변환)
+                        let estimatedArrivalTime = 'N/A';
+                        let estimatedArrivalDateObj = null; // Date 객체 저장
+                        if (pilot.groundspeed > 0) {
+                            const distanceKm = calculateDistance(
+                                pilot.latitude, pilot.longitude,
+                                RKSI_LAT, RKSI_LON
+                            );
+                            const timeToRKSIHours = distanceKm / pilot.groundspeed; // 시간 (시)
+                            const timeToRKSIMinutes = timeToRKSIHours * 60; // 시간 (분)
+
+                            // 현재 UTC 시각에 RKSI까지 걸리는 시간을 더함 (UTC Date 객체로 생성)
+                            const nowUtc = new Date(new Date().toUTCString());
+                            estimatedArrivalDateObj = new Date(nowUtc.getTime() + timeToRKSIMinutes * 60 * 1000);
+
+                            estimatedArrivalTime = estimatedArrivalDateObj.toLocaleTimeString('ko-KR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Asia/Seoul' // KST로 표시
+                            });
+                        } else {
+                            estimatedArrivalTime = '';
+                        }
+
+                        // 4. 현황 (Status) 판단
+                        let currentStatus = ''; // 기본값은 공란
+                        const distanceToRKSI = calculateDistance(pilot.latitude, pilot.longitude, RKSI_LAT, RKSI_LON);
+                        const MIN_ALT_FOR_APPROACH = 500; // 접근으로 간주할 최소 고도 (feet)
+
+                        // 지연 로직 우선 적용
+                        if (scheduledArrivalDateObj && estimatedArrivalDateObj) {
+                            const diffMs = estimatedArrivalDateObj.getTime() - scheduledArrivalDateObj.getTime();
+                            const diffMinutes = Math.round(diffMs / (1000 * 60)); // 분 단위 차이
+
+                            if (diffMinutes > 15) { // 변경 시각이 예정 시각보다 15분 초과 지연
+                                currentStatus = 'DELAYED';
+                            }
+                        }
+
+                        // 지연이 아닐 경우에만 접근 현황 판단
+                        if (currentStatus === '') { // 지연이 아닐 때만 다음 조건 확인
+                            if (pilot.groundspeed > 0 && distanceToRKSI < 40 && pilot.altitude > MIN_ALT_FOR_APPROACH) {
+                                currentStatus = 'APPROACH'; // 접근 중
+                            }
+                        }
+
+                        statusCell.className = getStatusClass(currentStatus);
+
+                        // 각 셀에 애니메이션 적용
+                        await animateText(callsignCell, pilot.callsign);
+                        await animateText(scheduledTimeCell, scheduledArrivalTimeFormatted);
+                        await animateText(departureAirportCell, departureAirport);
+                        await animateText(changedTimeCell, estimatedArrivalTime);
+                        await animateText(statusCell, currentStatus);
+
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                } else {
+                    statusMessage.textContent = '현재 인천공항(RKSI)으로 도착하는 항공기가 없습니다.';
+                }
+
+            } catch (error) {
+                statusMessage.textContent = '항공기 정보를 불러오지 못했습니다.';
+                flightBoardBody.innerHTML = `<tr><td colspan="5" class="error-message">오류: ${error.message}</td></tr>`;
+                console.error("Vatsim 항공기 정보 로드 오류:", error);
+            }
+        }
+
+        // 현황에 따른 CSS 클래스 반환 함수
+        function getStatusClass(status) {
+            switch (status) {
+                case 'APPROACH':
+                    return 'status-approach'; // 접근 중
+                case 'DELAYED':
+                    return 'status-delayed'; // 지연
+                default:
+                    return ''; // 해당 없으면 공란 (클래스 없음)
+            }
+        }
+
+        // Vatsim 관제사 정보 가져오기 (이전과 동일)
+        async function fetchVatsimAtc() {
+            const atcListDiv = document.querySelector('#vatsim-atc-info .atc-list');
+            const statusMessage = document.querySelector('#vatsim-atc-info .card > p');
+            statusMessage.textContent = 'Vatsim 관제사 정보를 불러오는 중...';
+
+            try {
+                const response = await fetch(VATSIM_DATA_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                const controllers = data.controllers;
+                if (controllers && controllers.length > 0) {
+                    atcListDiv.innerHTML = '';
+                    statusMessage.style.display = 'none';
+
+                    const displayLimit = 15;
+                    let atcCount = 0;
+                    controllers.forEach(atc => {
+                        if (atcCount < displayLimit &&
+                            (atc.callsign.includes('_DEL') || atc.callsign.includes('_GND') ||
+                                atc.callsign.includes('_TWR') || atc.callsign.includes('_APP') ||
+                                atc.callsign.includes('_CTR') || atc.callsign.includes('_FSS'))) {
+
+                            const logonTimeUTC = new Date(atc.logon_time);
+                            const logonTimeKST = new Date(logonTimeUTC.getTime() + (9 * 60 * 60 * 1000));
+                            const formattedLogonTime = logonTimeKST.toLocaleTimeString('ko-KR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                timeZone: 'Asia/Seoul'
+                            });
+
+                            const atcCard = document.createElement('div');
+                            atcCard.className = 'atc-card';
+                            atcCard.innerHTML = `
+                                <h3>${atc.callsign}</h3>
+                                <p><strong>이름:</strong> ${atc.name || '정보 없음'}</p>
+                                <p><strong>주파수:</strong> ${atc.frequency}</p>
+                                <p><strong>연결 시간:</strong> ${formattedLogonTime}</p>
+                            `;
+                            atcListDiv.appendChild(atcCard);
+                            atcCount++;
+                        }
+                    });
+
+                    if (atcListDiv.children.length === 0) {
+                        atcListDiv.innerHTML = '<p>현재 활동 중인 관제사가 없습니다.</p>';
+                    } else if (controllers.length > displayLimit) {
+                        atcListDiv.innerHTML += `<p class="more-info-hint">총 ${controllers.length}명의 관제사 중 ${displayLimit}명만 표시됩니다.</p>`;
+                    }
+
+                } else {
+                    atcListDiv.innerHTML = '<p>현재 활동 중인 관제사가 없습니다.</p>';
+                    statusMessage.style.display = 'none';
+                }
+
+            } catch (error) {
+                statusMessage.textContent = 'Vatsim 관제사 정보를 불러오지 못했습니다.';
+                atcListDiv.innerHTML = `<p class="error-message">오류: ${error.message}</p>`;
+                console.error("Vatsim 관제사 정보 로드 오류:", error);
+            }
+        }
+
+        // KST 시간을 업데이트하고 콜론을 깜빡이는 함수
+        let blinkState = true;
+        function updateKSTTime() {
+            const kstTimeElement = document.getElementById('current-kst-time');
+            const now = new Date(); // 현재 로컬 시간 (KST)
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+
+            let colonChar = blinkState ? ':' : ' '; // 깜빡이는 콜론 또는 공백
+
+            // 각 숫자를 span으로 감싸서 개별적인 박스 스타일 적용
+            kstTimeElement.innerHTML = `
+                <span class="time-digit">${hours[0]}</span>
+                <span class="time-digit">${hours[1]}</span>
+                <span class="time-separator">${colonChar}</span>
+                <span class="time-digit">${minutes[0]}</span>
+                <span class="time-digit">${minutes[1]}</span>
+            `;
+
+            blinkState = !blinkState; // 상태 토글
+        }
+
+
+        // 페이지 로드 시 정보 가져오기
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchVatsimAircraft();
+            fetchVatsimAtc();
+            updateKSTTime(); // 페이지 로드 시 즉시 시간 표시
+
+            // 주기적으로 업데이트
+            setInterval(fetchVatsimAircraft, 30000); // 30초마다 항공기 정보 업데이트
+            setInterval(fetchVatsimAtc, 60000); // 60초마다 관제사 정보 업데이트
+            setInterval(updateKSTTime, 1000); // 1초마다 KST 시간 업데이트
+        });
+    </script>
+</body>
+
+</html>
