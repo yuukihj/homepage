@@ -276,6 +276,12 @@
                                 }
                             }
 
+                            if (currentStatus === '') {
+                                if (pilot.groundspeed < 50 && distanceToRKSI < 10 && pilot.altitude < MIN_ALT_FOR_APPROACH) {
+                                    currentStatus = 'LANDED';
+                                }
+                            }
+
                             row.className = 'flight-row'; // 데이터가 있으면 클래스 유지
                             statusCell.className = getStatusClass(currentStatus);
 
@@ -337,6 +343,8 @@
             switch (status) {
                 case 'APPROACH':
                     return 'status-approach'; // 접근 중
+                case 'LANDED':
+                    return 'status-landed'; // 지연
                 case 'DELAYED':
                     return 'status-delayed'; // 지연
                 default:

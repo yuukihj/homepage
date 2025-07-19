@@ -197,43 +197,21 @@ body {
 }
 
 /* 현황 셀별 색상 */
-.flight-board .status-in-flight {
-  color: #00ff00; /* 비행 중 (녹색) */
+.flight-board .status-delayed {
+  color: #dc3545; /* 비행 중 (녹색) */
   font-weight: normal;
-  text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
 }
 
 .flight-board .status-approach {
   /* 새로운 도착 상태 */
   color: #ffd700; /* 황금색 (접근 중) */
   font-weight: normal;
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
 }
 
 .flight-board .status-landed {
   /* 새로운 도착 상태 */
-  color: #1e90ff; /* 파란색 (착륙) */
+  color: #00ff00; /* 파란색 (착륙) */
   font-weight: normal;
-  text-shadow: 0 0 8px rgba(30, 144, 255, 0.8);
-}
-
-.flight-board .status-taxi {
-  /* 추가된 착륙 후 택싱 상태 */
-  color: #ffaa00; /* 오렌지 (택싱 중) */
-  font-weight: normal;
-  text-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
-}
-
-.flight-board .status-holding {
-  color: #ff8c00; /* 홀딩 (다크 오렌지) - 공중 홀딩 */
-  font-weight: normal;
-  text-shadow: 0 0 8px rgba(255, 140, 0, 0.8);
-}
-
-.flight-board .status-parked {
-  color: #c0c0c0; /* 주차/게이트 (회색) */
-  font-weight: normal;
-  text-shadow: 0 0 8px rgba(192, 192, 192, 0.8);
 }
 
 /* 오류 메시지 (테이블 내부) */
