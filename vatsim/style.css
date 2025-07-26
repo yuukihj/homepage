@@ -123,7 +123,7 @@ body {
 
 .info-section {
   margin-bottom: 40px;
-  background-color: #333;
+  background-color: #1f1c23;
   padding-top: 20px; /* 네비게이션바 고정 시 콘텐츠 겹침 방지 */
 }
 
@@ -158,8 +158,6 @@ body {
 .flight-board-header {
   display: flex;
   align-items: flex-end; /* 아래쪽 정렬 */
-  margin-bottom: 20px;
-  border-bottom: 2px solid #eee; /* 기존 h2의 밑줄 유지 */
   padding-bottom: 10px;
 }
 
@@ -175,10 +173,9 @@ body {
 /* Vatsim 전광판 스타일 */
 .flight-board-card {
   /* 전광판이 들어갈 카드 */
-  background-color: #333; /* 어두운 배경색 */
+  background-color: #1f1c23; /* 어두운 배경색 */
   color: white; /* 전광판 글씨색 (밝은 녹색) */
-  font-family: "VT323", monospace; /* 전광판 폰트 적용 */
-  padding: 20px;
+  padding: 0px 20px 20px 20px;
   border-radius: 8px;
   overflow-x: auto; /* 내용이 넘칠 경우 스크롤바 생성 */
 }
@@ -190,7 +187,6 @@ body {
   margin-bottom: 15px;
   color: white;
   font-weight: bold;
-  font-family: "VT323", monospace; /* 폰트 명시적 적용 */
 }
 
 .flight-board {
@@ -204,10 +200,11 @@ body {
 }
 
 .flight-board thead th {
-  background-color: #ffe33a; /* 헤더 배경색 (더 어둡게) */
-  padding: 15px 10px;
-  font-size: 1.1em;
-  color: black;
+  background-color: #1f1c23; /* 헤더 배경색 (더 어둡게) */
+  padding: 10px 10px;
+  font-size: 0.8em;
+  color: white;
+  text-align: left;
   font-weight: 900;
   text-transform: uppercase; /* 대문자 */
 }
@@ -217,18 +214,17 @@ body {
   background-color: transparent; /* 투명 */
 }
 
-.flight-board tbody tr:nth-child(even) {
-  background-color: #1f1c23; /* 짝수 행에 아주 미세한 배경 */
-}
-
 .flight-board tbody tr:hover {
   background-color: rgba(0, 255, 0, 0.1); /* 호버 시 약간 더 밝게 */
 }
 
 .flight-board tbody td {
-  padding: 12px 10px;
+  background-color: #333;
+  text-align: left;
+  padding: 10px 10px;
   vertical-align: middle;
   color: white;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
   font-family: "VT323", monospace; /* 폰트 명시적 적용 (가장 중요) */
 }
 
