@@ -163,7 +163,7 @@ body {
 .flight-board thead th {
   background-color: #ffe33a; /* 헤더 배경색 (더 어둡게) */
   padding: 15px 10px;
-  font-size: 1.5em;
+  font-size: 1.1em;
   color: black;
   font-weight: 900;
   text-transform: uppercase; /* 대문자 */

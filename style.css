@@ -38,43 +38,83 @@ body {
   opacity: 0.9;
 }
 
-/* 네비게이션 바 스타일 */
 .navbar {
-  background-color: #333; /* 어두운 배경 */
-  padding: 15px 0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  position: sticky; /* 스크롤 시 상단에 고정 */
-  top: 0;
-  z-index: 1000; /* 다른 요소 위에 표시 */
+  display: flex; /* 추가 */
+  align-items: center; /* 추가 */
+  overflow: hidden;
+  background-color: #333;
+  font-family: Arial;
+  display: flex;
+  justify-content: center; /* 중앙 정렬 */
 }
 
-.nav-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex; /* 가로 정렬 */
-  justify-content: center; /* 가운데 정렬 */
-  gap: 30px; /* 메뉴 항목 간 간격 */
-}
-
-.nav-links li a {
+/* Links inside the navbar */
+.navbar a {
+  float: left;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
   text-decoration: none;
-  color: white;
-  font-weight: 500;
-  font-size: 1.1em;
-  padding: 8px 15px;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  display: flex; /* flexbox 아이템으로 만들기 */
+  align-items: center; /* 내부 콘텐츠 수직 중앙 정렬 */
+  height: 100%; /* 부모의 높이를 상속받아 사용 */
 }
 
-.nav-links li a:hover,
-.nav-links li a.active {
-  /* 현재 페이지를 나타내는 클래스 (JS로 동적 추가 가능) */
-  background-color: #007bff; /* 호버 및 활성 색상 */
-  color: white;
+/* The dropdown container */
+.dropdown {
+  float: left;
+  overflow: hidden;
 }
 
-/* 메인 콘텐츠 스타일 */
+/* Dropdown button */
+.dropdown .dropbtn {
+  font-size: 16px;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 14px 16px;
+  background-color: inherit;
+  font-family: inherit; /* Important for vertical align on mobile phones */
+  margin: 0; /* Important for vertical align on mobile phones */
+  vertical-align: middle; /* 이 줄을 추가해주세요 */
+}
+
+/* Add a red background color to navbar links on hover */
+.navbar a:hover,
+.dropdown:hover .dropbtn {
+  background-color: red;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+/* Add a grey background color to dropdown links on hover */
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
 .main-content {
   padding: 40px 0;
 }
