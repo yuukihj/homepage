@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>정보 허브</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        .comparison-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .fuel-type-select {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .fuel-type-select button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ecf0f1;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .fuel-type-select button.active {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: calc(100% - 24px);
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .result-box {
+            padding: 15px;
+            background-color: #e8f6f3;
+            border-left: 5px solid #1abc9c;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .result-box p {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .note {
+            font-size: 0.9em;
+            color: #95a5a6;
+            text-align: center;
+        }
+
+        #ev-card {
+            background-color: #f2f6ff;
+            border: 2px solid #5d9cec;
+        }
+
+        #ice-card {
+            background-color: #fff8f2;
+            border: 2px solid #f99049;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>✨ 정보 허브 ✨</h1>
+            <p>API를 통해 실시간으로 업데이트되는 유용한 정보를 만나보세요!</p>
+        </div>
+    </header>
+
+    <div class="navbar">
+        <a href="../index.html">Home</a>
+        <a href="#index.html">EV CAR</a>
+        <div class="dropdown">
+            <button class="dropbtn">VATSIM ▽
+                <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-content">
+                <a href="/vatsim/airport_status.html">국내공항 도착현황</a>
+                <a href="#">유용한 링크</a>
+                <a href="#">Link 3</a>
+            </div>
+        </div>
+    </div>
+    <main class="main-content">
+        <div class="container">
+            <h1>🚗 차량 유지비 비교 계산기</h1>
+            <p class="note">각 차량의 유지비용을 계산하여 비교해보세요. 모든 계산은 km당 비용입니다.</p>
+
+            <div class="comparison-cards">
+
+                <div id="ev-card" class="card">
+                    <h2>🔌 전기차 유지비</h2>
+                    <div class="form-group">
+                        <label for="ev-charge-price">kWh당 충전 금액 (원)</label>
+                        <input type="number" id="ev-charge-price" value="300" placeholder="예: 300">
+                    </div>
+                    <div class="form-group">
+                        <label for="ev-efficiency">전비 (km/kWh)</label>
+                        <input type="number" id="ev-efficiency" value="6" step="0.1" placeholder="예: 6">
+                    </div>
+                    <div class="result-box">
+                        <p><span id="ev-cost-per-km">50</span> 원/km</p>
+                    </div>
+                </div>
+
+                <div id="ice-card" class="card">
+                    <h2>⛽ 내연기관차 유지비</h2>
+                    <div class="fuel-type-select">
+                    </div>
+
+                    <div id="gasoline-form" class="fuel-form active">
+                        <div class="form-group">
+                            <label for="gasoline-price">L당 가격 (원)</label>
+                            <input type="number" id="gasoline-price" value="1600" placeholder="예: 1600">
+                        </div>
+                        <div class="form-group">
+                            <label for="gasoline-efficiency">연비 (km/L)</label>
+                            <input type="number" id="gasoline-efficiency" value="10" step="0.1" placeholder="예: 10">
+                        </div>
+                    </div>
+
+
+                    <div class="result-box">
+                        <p><span id="ice-cost-per-km">160</span> 원/km</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script>
+            // 전기차 계산
+            const evChargePriceInput = document.getElementById('ev-charge-price');
+            const evEfficiencyInput = document.getElementById('ev-efficiency');
+            const evCostPerKmSpan = document.getElementById('ev-cost-per-km');
+
+            function calculateEvCost() {
+                const chargePrice = parseFloat(evChargePriceInput.value) || 0;
+                const efficiency = parseFloat(evEfficiencyInput.value) || 0;
+                const costPerKm = (efficiency > 0) ? chargePrice / efficiency : 0;
+                evCostPerKmSpan.textContent = Math.round(costPerKm);
+            }
+
+            // 내연기관차 계산
+            const gasolineBtn = document.getElementById('gasoline-btn');
+            const dieselBtn = document.getElementById('diesel-btn');
+            const gasolineForm = document.getElementById('gasoline-form');
+            const dieselForm = document.getElementById('diesel-form');
+            const iceCostPerKmSpan = document.getElementById('ice-cost-per-km');
+
+            let currentFuelType = 'gasoline';
+
+            function calculateIceCost() {
+                let priceInput, efficiencyInput;
+                if (currentFuelType === 'gasoline') {
+                    priceInput = document.getElementById('gasoline-price');
+                    efficiencyInput = document.getElementById('gasoline-efficiency');
+                } else {
+                    priceInput = document.getElementById('diesel-price');
+                    efficiencyInput = document.getElementById('diesel-efficiency');
+                }
+                const price = parseFloat(priceInput.value) || 0;
+                const efficiency = parseFloat(efficiencyInput.value) || 0;
+                const costPerKm = (efficiency > 0) ? price / efficiency : 0;
+                iceCostPerKmSpan.textContent = Math.round(costPerKm);
+            }
+
+            // 이벤트 리스너 설정
+            evChargePriceInput.addEventListener('input', calculateEvCost);
+            evEfficiencyInput.addEventListener('input', calculateEvCost);
+
+            gasolineForm.addEventListener('input', calculateIceCost);
+            dieselForm.addEventListener('input', calculateIceCost);
+
+            gasolineBtn.addEventListener('click', () => {
+                gasolineBtn.classList.add('active');
+                dieselBtn.classList.remove('active');
+                gasolineForm.style.display = 'block';
+                dieselForm.style.display = 'none';
+                currentFuelType = 'gasoline';
+                calculateIceCost();
+            });
+
+            dieselBtn.addEventListener('click', () => {
+                dieselBtn.classList.add('active');
+                gasolineBtn.classList.remove('active');
+                gasolineForm.style.display = 'none';
+                dieselForm.style.display = 'block';
+                currentFuelType = 'diesel';
+                calculateIceCost();
+            });
+
+            // 페이지 로드 시 초기 계산 실행
+            window.addEventListener('load', () => {
+                calculateEvCost();
+                calculateIceCost();
+            });
+        </script>
+</body>
+
+</html>
