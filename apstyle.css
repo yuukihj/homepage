@@ -356,3 +356,11 @@ p.error-message {
   text-align: center;
   margin-top: 15px;
 }
+.footer {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 25px 0;
+  font-size: 0.9em;
+  margin-top: 50px;
+}
