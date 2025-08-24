@@ -5,33 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vatsim 공항 전광판</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="apstyle.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <header class="header">
-        <div class="container">
-            <h1>✈️ Vatsim 인천공항 (RKSI) 실시간 도착 전광판</h1>
-            <p>인천국제공항(RKSI)에서 도착하는 항공기 정보를 확인하세요!</p>
-        </div>
-    </header>
+    <script>
+        fetch("first.html")
+            .then(response => response.text())
+            .then(data => {
+                document.body.insertAdjacentHTML('afterbegin', data);
 
-    <div class="navbar">
-        <a href="../index.html">Home</a>
-        <a href="/evcar/index.html">EV CAR</a>
-        <div class="dropdown">
-            <button class="dropbtn">VATSIM ▽
-                <i class="fa fa-caret-down"></i>
-            </button>
-            <div class="dropdown-content">
-                <a href="/vatsim/airport_status.html">국내공항 도착현황</a>
-                <a href="#">유용한 링크</a>
-                <a href="#">Link 3</a>
-            </div>
-        </div>
-    </div>
+            });
+    </script>>
 
     <main class="main-content">
         <div class="container">

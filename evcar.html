@@ -109,27 +109,13 @@
 </head>
 
 <body>
-    <header class="header">
-        <div class="container">
-            <h1>✨ 정보 허브 ✨</h1>
-            <p>API를 통해 실시간으로 업데이트되는 유용한 정보를 만나보세요!</p>
-        </div>
-    </header>
-
-    <div class="navbar">
-        <a href="../index.html">Home</a>
-        <a href="#index.html">EV CAR</a>
-        <div class="dropdown">
-            <button class="dropbtn">VATSIM ▽
-                <i class="fa fa-caret-down"></i>
-            </button>
-            <div class="dropdown-content">
-                <a href="/vatsim/airport_status.html">국내공항 도착현황</a>
-                <a href="#">유용한 링크</a>
-                <a href="#">Link 3</a>
-            </div>
-        </div>
-    </div>
+    <script>
+        fetch("../first.html")
+            .then(response => response.text())
+            .then(data => {
+                document.body.insertAdjacentHTML('afterbegin', data);
+            });
+    </script>>
     <main class="main-content">
         <div class="container">
             <h1>🚗 차량 유지비 비교 계산기</h1>
