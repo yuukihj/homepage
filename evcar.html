@@ -115,7 +115,7 @@
             .then(data => {
                 document.body.insertAdjacentHTML('afterbegin', data);
             });
-    </script>>
+    </script>
     <main class="main-content">
         <div class="container">
             <h1>🚗 차량 유지비 비교 계산기</h1>
@@ -156,6 +156,9 @@
                 <div id="comparison-card" class="card">
                     <h2>📊 100km 주행 시 절약 금액</h2>
                     <p id="savings-message">각 계산기 값을 입력하면 절약 금액이 나타납니다.</p>
+                    <h2>💰 10,000원 충전/주유 시 비교</h2>
+                    <p id="distance-comparison">1만원 기준 주행 가능 거리: 계산 대기중...</p>
+
                 </div>
 
                 <div id="monthly-card" class="card">
@@ -202,6 +205,21 @@
         function updateComparison() {
             const evCostPerKm = parseFloat(evCostPerKmSpan.textContent) || 0;
             const iceCostPerKm = parseFloat(iceCostPerKmSpan.textContent) || 0;
+
+            // 💰 1만원 기준 주행 가능 거리 비교
+            const budget = 10000;
+            if (evCostPerKm > 0 && iceCostPerKm > 0) {
+                const evDistance = Math.floor(budget / evCostPerKm);
+                const iceDistance = Math.floor(budget / iceCostPerKm);
+
+                document.getElementById('distance-comparison').innerHTML =
+                    `1만원으로 전기차는 <span style="color:#27ae60;font-weight:700;">${evDistance.toLocaleString()}km</span>, 
+         내연기관차는 <span style="color:#c0392b;font-weight:700;">${iceDistance.toLocaleString()}km</span> 주행 가능`;
+            } else {
+                document.getElementById('distance-comparison').textContent =
+                    '1만원 기준 주행 가능 거리: 계산 대기중...';
+            }
+
 
             // 100km 절약 금액 계산
             if (evCostPerKm > 0 && iceCostPerKm > 0) {
