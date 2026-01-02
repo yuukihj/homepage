@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>정보 허브</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        .comparison-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+
+        .card {
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: calc(100% - 24px);
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .result-box {
+            padding: 15px;
+            background-color: #e8f6f3;
+            border-left: 5px solid #1abc9c;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .result-box p {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .note {
+            font-size: 0.9em;
+            color: #95a5a6;
+            text-align: center;
+        }
+
+        #ev-card {
+            background-color: #f2f6ff;
+            border: 2px solid #5d9cec;
+        }
+
+        #ice-card {
+            background-color: #fff8f2;
+            border: 2px solid #f99049;
+        }
+
+        #monthly-card {
+            background-color: #fff8f2;
+            border: 2px solid #f99049;
+        }
+
+        #comparison-card {
+            grid-column: 1 / span 2;
+            background-color: #e6f7ff;
+            border: 2px solid #3498db;
+            text-align: center;
+        }
+
+        #monthly-card {
+            grid-column: 1 / span 2;
+            background-color: #e6f7ff;
+            border: 2px solid #3498db;
+            text-align: center;
+        }
+
+        #comparison-card p {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2980b9;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        fetch("../first.html")
+            .then(response => response.text())
+            .then(data => {
+                document.body.insertAdjacentHTML('afterbegin', data);
+            });
+    </script>
+    <main class="main-content">
+        <div class="container">
+            <h1>🚗 차량 유지비 비교 계산기</h1>
+            <p class="note">각 차량의 유지비용을 계산하여 비교해보세요. 모든 계산은 km당 비용입니다.</p>
+
+            <div class="comparison-cards">
+
+                <div id="ev-card" class="card">
+                    <h2>🔌 전기차 유지비</h2>
+                    <div class="form-group">
+                        <label for="ev-charge-price">kWh당 충전 금액 (원)</label>
+                        <input type="number" id="ev-charge-price" value="300" placeholder="예: 300">
+                    </div>
+                    <div class="form-group">
+                        <label for="ev-efficiency">전비 (km/kWh)</label>
+                        <input type="number" id="ev-efficiency" value="6" step="0.1" placeholder="예: 6">
+                    </div>
+                    <div class="result-box">
+                        <p><span id="ev-cost-per-km">50</span> 원/km</p>
+                    </div>
+                </div>
+
+                <div id="ice-card" class="card">
+                    <h2>⛽ 내연기관 유지비</h2>
+                    <div class="form-group">
+                        <label for="fuel-price">L당 연료 가격 (원)</label>
+                        <input type="number" id="fuel-price" value="1600" placeholder="예: 1600">
+                    </div>
+                    <div class="form-group">
+                        <label for="fuel-efficiency">연비 (km/L)</label>
+                        <input type="number" id="fuel-efficiency" value="10" step="0.1" placeholder="예: 10">
+                    </div>
+                    <div class="result-box">
+                        <p><span id="ice-cost-per-km">160</span> 원/km</p>
+                    </div>
+                </div>
+
+                <div id="comparison-card" class="card">
+                    <h2>📊 100km 주행 시 절약 금액</h2>
+                    <p id="savings-message">각 계산기 값을 입력하면 절약 금액이 나타납니다.</p>
+                    <h2>💰 10,000원 충전/주유 시 비교</h2>
+                    <p id="distance-comparison">1만원 기준 주행 가능 거리: 계산 대기중...</p>
+
+                </div>
+
+                <div id="monthly-card" class="card">
+                    <h2>🗓️ 한 달 주행 비용 비교</h2>
+                    <div class="form-group">
+                        <label for="monthly-distance">한 달 주행 거리 (km)</label>
+                        <input type="number" id="monthly-distance" value="1000" placeholder="예: 1000">
+                    </div>
+                    <div class="result-box" style="margin-top: 20px;">
+                        <p id="monthly-ev-cost">전기차: 0원</p>
+                        <p id="monthly-ice-cost">내연기관차: 0원</p>
+                        <p id="monthly-savings-message" style="font-size: 1.2em; font-weight: 700; color: #27ae60;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025. Hyunjae Lee</p>
+            <p>All rights reserved</p>
+        </div>
+    </footer>
+    <script>
+        // 전기차 계산
+        const evChargePriceInput = document.getElementById('ev-charge-price');
+        const evEfficiencyInput = document.getElementById('ev-efficiency');
+        const evCostPerKmSpan = document.getElementById('ev-cost-per-km');
+
+        // 내연기관차 계산
+        const fuelPriceInput = document.getElementById('fuel-price');
+        const fuelEfficiencyInput = document.getElementById('fuel-efficiency');
+        const iceCostPerKmSpan = document.getElementById('ice-cost-per-km');
+
+        // 비교 카드 (100km)
+        const savingsMessage = document.getElementById('savings-message');
+
+        // 월별 비용 카드
+        const monthlyDistanceInput = document.getElementById('monthly-distance');
+        const monthlyEvCostMessage = document.getElementById('monthly-ev-cost');
+        const monthlyIceCostMessage = document.getElementById('monthly-ice-cost');
+        const monthlySavingsMessage = document.getElementById('monthly-savings-message');
+
+        function updateComparison() {
+            const evCostPerKm = parseFloat(evCostPerKmSpan.textContent) || 0;
+            const iceCostPerKm = parseFloat(iceCostPerKmSpan.textContent) || 0;
+
+            // 💰 1만원 기준 주행 가능 거리 비교
+            const budget = 10000;
+            if (evCostPerKm > 0 && iceCostPerKm > 0) {
+                const evDistance = Math.floor(budget / evCostPerKm);
+                const iceDistance = Math.floor(budget / iceCostPerKm);
+
+                document.getElementById('distance-comparison').innerHTML =
+                    `1만원으로 전기차는 <span style="color:#27ae60;font-weight:700;">${evDistance.toLocaleString()}km</span>, 
+         내연기관차는 <span style="color:#c0392b;font-weight:700;">${iceDistance.toLocaleString()}km</span> 주행 가능`;
+            } else {
+                document.getElementById('distance-comparison').textContent =
+                    '1만원 기준 주행 가능 거리: 계산 대기중...';
+            }
+
+
+            // 100km 절약 금액 계산
+            if (evCostPerKm > 0 && iceCostPerKm > 0) {
+                const difference = iceCostPerKm - evCostPerKm;
+                const savings100km = Math.round(difference * 100);
+                if (difference > 0) {
+                    savingsMessage.innerHTML = `전기차를 타면 **100km 주행 당 약 <span style="color: #27ae60; font-weight: 700;">${savings100km}원</span>** 절약할 수 있습니다.`;
+                } else if (difference < 0) {
+                    savingsMessage.innerHTML = `내연기관차를 타면 **100km 주행 당 약 <span style="color: #c0392b; font-weight: 700;">${Math.abs(savings100km)}원</span>** 절약할 수 있습니다.`;
+                } else {
+                    savingsMessage.innerHTML = '두 차량의 1km당 유지비가 동일합니다.';
+                }
+            } else {
+                savingsMessage.textContent = '각 계산기 값을 입력하면 절약 금액이 나타납니다.';
+            }
+
+            // 월별 비용 및 절약 금액 계산
+            const monthlyDistance = parseFloat(monthlyDistanceInput.value) || 0;
+            if (monthlyDistance > 0 && evCostPerKm > 0 && iceCostPerKm > 0) {
+                const monthlyEvCost = Math.round(evCostPerKm * monthlyDistance);
+                const monthlyIceCost = Math.round(iceCostPerKm * monthlyDistance);
+                const monthlySavings = Math.abs(monthlyIceCost - monthlyEvCost);
+
+                monthlyEvCostMessage.textContent = `전기차: ${monthlyEvCost.toLocaleString()}원`;
+                monthlyIceCostMessage.textContent = `내연기관차: ${monthlyIceCost.toLocaleString()}원`;
+
+                if (monthlyEvCost < monthlyIceCost) {
+                    monthlySavingsMessage.innerHTML = `월 **<span style="color: #27ae60;">${monthlySavings.toLocaleString()}원</span>** 절약`;
+                } else if (monthlyIceCost < monthlyEvCost) {
+                    monthlySavingsMessage.innerHTML = `월 **<span style="color: #c0392b;">${monthlySavings.toLocaleString()}원</span>** 절약`;
+                } else {
+                    monthlySavingsMessage.textContent = ''; // 동일할 경우 메시지 제거
+                }
+            } else {
+                monthlyEvCostMessage.textContent = '전기차: 0원';
+                monthlyIceCostMessage.textContent = '내연기관차: 0원';
+                monthlySavingsMessage.textContent = '';
+            }
+        }
+
+        // 각 계산기 함수
+        function calculateEvCost() {
+            const chargePrice = parseFloat(evChargePriceInput.value) || 0;
+            const efficiency = parseFloat(evEfficiencyInput.value) || 0;
+            const costPerKm = (efficiency > 0) ? chargePrice / efficiency : 0;
+            evCostPerKmSpan.textContent = Math.round(costPerKm);
+            updateComparison();
+        }
+
+        function calculateIceCost() {
+            const price = parseFloat(fuelPriceInput.value) || 0;
+            const efficiency = parseFloat(fuelEfficiencyInput.value) || 0;
+            const costPerKm = (efficiency > 0) ? price / efficiency : 0;
+            iceCostPerKmSpan.textContent = Math.round(costPerKm);
+            updateComparison();
+        }
+
+        // 이벤트 리스너 설정
+        evChargePriceInput.addEventListener('input', calculateEvCost);
+        evEfficiencyInput.addEventListener('input', calculateEvCost);
+        fuelPriceInput.addEventListener('input', calculateIceCost);
+        fuelEfficiencyInput.addEventListener('input', calculateIceCost);
+        monthlyDistanceInput.addEventListener('input', updateComparison);
+
+        // 페이지 로드 시 초기 계산 실행
+        window.addEventListener('load', () => {
+            calculateEvCost();
+            calculateIceCost();
+        });
+    </script>
+</body>
+
+</html>

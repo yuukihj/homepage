@@ -1,0 +1,242 @@
+/* 기본 스타일 a*/
+body {
+  font-family: "Noto Sans KR", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6; /* 부드러운 배경색 */
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px; /* 좌우 패딩 추가 */
+}
+
+/* 헤더 스타일 */
+.header {
+  background-image: linear-gradient(
+    to right,
+    #4facfe 0%,
+    #00f2fe 100%
+  ); /* 그라데이션 배경 */
+  color: white;
+  padding: 60px 0;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  font-size: 2.8em;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 1.2em;
+  opacity: 0.9;
+}
+
+.navbar {
+  display: flex; /* 추가 */
+  align-items: center; /* 추가 */
+  overflow: hidden;
+  background-color: #333;
+  font-family: Arial;
+  display: flex;
+  justify-content: center; /* 중앙 정렬 */
+}
+
+/* Links inside the navbar */
+.navbar a {
+  float: left;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  display: flex; /* flexbox 아이템으로 만들기 */
+  align-items: center; /* 내부 콘텐츠 수직 중앙 정렬 */
+  height: 100%; /* 부모의 높이를 상속받아 사용 */
+}
+
+/* The dropdown container */
+.dropdown {
+  float: left;
+  overflow: hidden;
+}
+
+/* Dropdown button */
+.dropdown .dropbtn {
+  font-size: 16px;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 14px 16px;
+  background-color: inherit;
+  font-family: inherit; /* Important for vertical align on mobile phones */
+  margin: 0; /* Important for vertical align on mobile phones */
+  vertical-align: middle; /* 이 줄을 추가해주세요 */
+}
+
+/* Add a red background color to navbar links on hover */
+.navbar a:hover,
+.dropdown:hover .dropbtn {
+  background-color: red;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+/* Add a grey background color to dropdown links on hover */
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.main-content {
+  padding: 40px 0;
+}
+
+.info-section {
+  margin-bottom: 40px;
+  padding-top: 20px; /* 네비게이션바 고정 시 콘텐츠 겹침 방지 */
+}
+
+.info-section h2 {
+  font-size: 2em;
+  color: #007bff; /* 포인트 색상 */
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card p,
+.card ul {
+  font-size: 1.1em;
+  color: #555;
+}
+
+.news-list {
+  list-style: none;
+  padding: 0;
+}
+
+.news-list li {
+  margin-bottom: 15px;
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 10px;
+}
+
+.news-list li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.news-list a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.news-list a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 문의 폼 스타일 */
+.contact-form .form-group {
+  margin-bottom: 20px;
+}
+
+.contact-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1em;
+  box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+}
+
+.contact-form textarea {
+  resize: vertical; /* 수직 방향으로만 크기 조절 가능 */
+}
+
+.contact-form input[type="text"]:focus,
+.contact-form input[type="email"]:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.submit-button {
+  background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  font-weight: 600;
+}
+
+.submit-button:hover {
+  opacity: 0.9;
+}
+
+/* 푸터 스타일 */
+.footer {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 25px 0;
+  font-size: 0.9em;
+  margin-top: 50px;
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RKSS 자동 TSAT 계산기 (VATSIM)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f2f2f2;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>RKSS 출발 항공기 TSAT 계산기 (자동 로드, UTC 기준)</h2>
+    <label>Taxi Time (분): <input type="number" id="taxi" value="15"></label>
+    <table>
+        <thead>
+            <tr>
+                <th>Callsign</th>
+                <th>TOBT</th>
+                <th>CTOT</th>
+                <th>TSAT</th>
+                <th>TOBT 초과</th>
+            </tr>
+        </thead>
+        <tbody id="aircraft-list"></tbody>
+    </table>
+
+    <script>
+        let aircrafts = [];
+        const taxiInput = document.getElementById("taxi");
+
+        function fetchDataAndUpdate() {
+            fetch("https://data.vatsim.net/v3/vatsim-data.json")
+                .then(r => r.json())
+                .then(data => {
+                    const now = new Date();
+                    const taxiMin = parseInt(taxiInput.value, 10) || 15;
+                    aircrafts = data.pilots
+                        .filter(p => p.flight_plan && p.flight_plan.departure === "RKSI")
+                        .map(p => {
+                            const tobt = new Date(p.flight_plan.deptime);
+                            const ctot = p.flight_plan.remarks && /CTOT:([0-9]{4})/.exec(p.flight_plan.remarks)
+                                ? parseCTOT(p.flight_plan.remarks.match(/CTOT:([0-9]{4})/)[1])
+                                : null;
+                            let tsat = ctot ? new Date(ctot.getTime() - taxiMin * 60000) : null;
+                            let overdue = tobt < now;
+                            if (overdue && tsat) tsat = new Date(tsat.getTime() + 5 * 60000);
+                            return { callsign: p.callsign, tobt, ctot, tsat, overdue };
+                        })
+                        .filter(a => a.ctot && a.tobt)
+                        .sort((a, b) => {
+                            if (a.overdue !== b.overdue) return a.overdue - b.overdue;
+                            return a.tsat - b.tsat;
+                        });
+                    renderList();
+                })
+                .catch(err => console.error("데이터 로딩 오류", err));
+        }
+
+        function parseCTOT(ctotHHMM) {
+            const now = new Date();
+            const hh = parseInt(ctotHHMM.slice(0, 2), 10);
+            const mm = parseInt(ctotHHMM.slice(2), 10);
+            return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm));
+        }
+
+        function formatUTC(d) {
+            if (!d) return "-";
+            const hh = String(d.getUTCHours()).padStart(2, "0");
+            const mm = String(d.getUTCMinutes()).padStart(2, "0");
+            return `${hh}:${mm}`;
+        }
+
+        function renderList() {
+            const tbody = document.getElementById("aircraft-list");
+            tbody.innerHTML = "";
+            aircrafts.forEach(a => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td>${a.callsign}</td>
+          <td>${formatUTC(a.tobt)}</td>
+          <td>${formatUTC(a.ctot)}</td>
+          <td>${formatUTC(a.tsat)}</td>
+          <td>${a.overdue ? "✅" : "❌"}</td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        fetchDataAndUpdate();
+        setInterval(fetchDataAndUpdate, 60000);
+    </script>
+</body>
+
+</html>
